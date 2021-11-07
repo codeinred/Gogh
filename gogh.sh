@@ -240,7 +240,19 @@ declare -a THEMES=(
 
 # Allow developer to change url to forked url for easier testing
 BASE_URL=${BASE_URL:-"https://raw.githubusercontent.com/Mayccoll/Gogh/master"}
-PROGRESS_URL="https://raw.githubusercontent.com/phenonymous/shell-progressbar/1.0/progress.sh"
+
+# Downloads and prints a file from a url.
+# Uses curl if on OSX, and wget on linux.
+download() {
+  local url="$1"
+  if [[ "$(uname)" = "Darwin" ]]; then
+    # OSX ships with curl
+    curl -sLo- "${url}"
+  else
+    # Linux ships with wget
+    wget -qO- "${url}"
+  fi
+}
 
 capitalize() {
   local ARGUMENT=$1
@@ -272,13 +284,8 @@ set_gogh() {
   if [[ -e "${SCRIPT_PATH}/themes/$1" ]]; then
     bash "${SCRIPT_PATH}/themes/$1"
   else
-    if [[ "$(uname)" = "Darwin" ]]; then
-      # OSX ships with curl
-      bash -c "$(curl -sLo- "${url}")"
-    else
-      # Linux ships with wget
-      bash -c "$(wget -qO- "${url}")"
-    fi
+    # Download and execute the theme script to install it
+    bash -c "$(download "${url}")"
   fi
 }
 
@@ -388,13 +395,10 @@ fi
 # |
 # | ::::::: Fancy progressbar for lengthy operations
 # |
+PROGRESS_URL="https://raw.githubusercontent.com/phenonymous/shell-progressbar/1.0/progress.sh"
 if [[ ${#OPTION[@]} -gt 5 ]]; then
   # Note: We use eval here because we want the functions to be available in this script
-  if [[ "$(uname)" = "Darwin" ]]; then
-    eval "$(curl -so- ${PROGRESS_URL})" 2> /dev/null
-  else
-    eval "$(wget -qO- ${PROGRESS_URL})"  2> /dev/null
-  fi
+  eval "$(download ${PROGRESS_URL})" 2> /dev/null
 fi
 
 
