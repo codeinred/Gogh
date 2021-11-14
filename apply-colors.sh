@@ -47,6 +47,7 @@ trap 'GLOBAL_VAR_CLEANUP; trap - EXIT' EXIT HUP INT QUIT PIPE TERM
 # | Second test for TERMINAL in case user ran
 # | theme script directly instead of gogh.sh
 # | ============================================
+get_terminal() {
 if [[ -z "${TERMINAL:-}" ]]; then
 
   # |
@@ -72,8 +73,13 @@ if [[ -z "${TERMINAL:-}" ]]; then
     done
   fi
 fi
+}
 
 
+# |
+# | Check that we have all the dependencies we need to proceed with installation
+# | ============================================================================
+validate_environment() {
 case "${TERMINAL}" in
   pantheon-terminal|io.elementary.t* )
     if [[ -z "${GS}" ]]; then
@@ -131,6 +137,7 @@ case "${TERMINAL}" in
     fi
     ;;
 esac
+}
 
 
 # |
@@ -340,18 +347,6 @@ else
     unset color_str
   }
 fi
-
-
-# |
-# | Print theme colors
-# | ===========================================
-gogh_colors
-if [[ ${GOGH_DRY_RUN:-0} -eq 1 ]]; then
-  color
-  # End here if dry run was initiated
-  exit 0
-fi
-
 
 apply_elementary() {
   # |
@@ -802,6 +797,7 @@ apply_xfce4-terminal() {
     exit 0
 }
 
+apply_theme() {
 [[ -n "${UUIDGEN}" ]] && PROFILE_SLUG="$(uuidgen)"
 
 case "${TERMINAL}" in
@@ -920,6 +916,23 @@ case "${TERMINAL}" in
     ;;
 
 esac
+}
+
+# These two steps only need to be run once
+get_terminal
+validate_environment
+
+# But these steps should run before every theme
+# |
+# | Print theme colors
+# | ===========================================
+gogh_colors
+if [[ ${GOGH_DRY_RUN:-0} -eq 1 ]]; then
+  color
+  # End here if dry run was initiated
+  exit 0
+fi
+apply_theme
 
 unset PROFILE_NAME
 unset PROFILE_SLUG
